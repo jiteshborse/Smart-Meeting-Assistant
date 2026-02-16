@@ -8,13 +8,13 @@ import {
 } from './ui/dropdown-menu';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { useAuthStore } from '../stores/authStore';
-import { useTheme } from './theme-provider';
-import { Menu, Moon, Sun, LogOut } from 'lucide-react';
+
+import { Menu, LogOut } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 
 export default function Layout() {
     const { user, logout } = useAuthStore();
-    const { theme, setTheme } = useTheme();
+
     const navigate = useNavigate();
 
     const handleLogout = () => {
@@ -66,13 +66,7 @@ export default function Layout() {
                     {/* Right side actions */}
                     <div className="flex items-center gap-2">
                         {/* Theme toggle */}
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                        >
-                            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-                        </Button>
+
 
                         {/* User menu */}
                         <DropdownMenu>
