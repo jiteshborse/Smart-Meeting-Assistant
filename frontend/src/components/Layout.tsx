@@ -13,12 +13,12 @@ import { Menu, LogOut } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 
 export default function Layout() {
-    const { user, logout } = useAuthStore();
+    const { user, signOut } = useAuthStore();
 
     const navigate = useNavigate();
 
-    const handleLogout = () => {
-        logout();
+    const handleLogout = async () => {
+        await signOut();
         navigate('/login');
     };
 

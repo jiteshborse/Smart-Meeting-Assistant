@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from '../lib/supabase';
-import { User } from '@supabase/supabase-js';
+import type { User } from '@supabase/supabase-js';
 
 interface AuthState {
     user: User | null;
@@ -27,7 +27,7 @@ export const useAuthStore = create<AuthState>()(
                 set({ isLoading: true });
                 try {
                     const { data, error } = await supabase.auth.signInWithPassword({
-                        email,
+                        email: email.trim(),
                         password
                     });
 
@@ -43,7 +43,7 @@ export const useAuthStore = create<AuthState>()(
                 set({ isLoading: true });
                 try {
                     const { data, error } = await supabase.auth.signUp({
-                        email,
+                        email: email.trim(),
                         password
                     });
 
