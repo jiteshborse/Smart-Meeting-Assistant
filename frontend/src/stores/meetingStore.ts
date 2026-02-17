@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
-import { Meeting } from '../types/database';
+import type { Meeting } from '../types/database';
 import { useAuthStore } from './authStore';
 
 interface MeetingState {
@@ -12,9 +12,11 @@ interface MeetingState {
     updateMeeting: (id: string, data: Partial<Meeting>) => Promise<void>;
     deleteMeeting: (id: string) => Promise<void>;
     setCurrentMeeting: (meeting: Meeting | null) => void;
+    uploadAudio: (meetingId: string, audioBlob: Blob) => Promise<string | null>;
+    getAudioUrl: (meetingId: string) => Promise<string | null>;
 }
 
-export const useMeetingStore = create<MeetingState>((set, get) => ({
+export const useMeetingStore = create<MeetingState>((set) => ({
     meetings: [],
     currentMeeting: null,
     isLoading: false,
@@ -99,9 +101,88 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
         }
     },
 
+
+
+    uploadAudio: async (meetingId: string, audioBlob: Blob): Promise<string | null> => {
+        const user = useAuthStore.getState().user;
+        if (!user) return null;
+
+        try {
+            // Create file path: user-id/meeting-id/recording.webm
+            const filePath = `${user.id}/${meetingId}/recording.webm`;
+
+            // Upload to Supabase Storage
+            const { error: uploadError } = await supabase.storage
+                .from('meeting-recordings')
+                .upload(filePath, audioBlob, {
+                    contentType: audioBlob.type,
+                    cacheControl: '3600',
+                    upsert: true
+                });
+
+            if (uploadError) throw uploadError;
+
+            // Generate signed URL for immediate use
+            const { data, error: urlError } = await supabase.storage
+                .from('meeting-recordings')
+                .createSignedUrl(filePath, 3600 * 24 * 365); // 1 year expiry for the metadata link (or use path)
+
+            if (urlError) throw urlError;
+
+            // Update meeting with audio URL (storing signed URL for now, but better to store path)
+            await supabase
+                .from('meetings')
+                .update({
+                    metadata: {
+                        audio_path: filePath, // Store path for future signing
+                        audio_size: audioBlob.size,
+                        audio_type: audioBlob.type
+                    }
+                })
+                .eq('id', meetingId);
+
+            return data.signedUrl;
+        } catch (error) {
+            console.error('Error uploading audio:', error);
+            return null;
+        }
+    },
+
+    getAudioUrl: async (meetingId: string): Promise<string | null> => {
+        const user = useAuthStore.getState().user;
+        if (!user) return null;
+
+        const filePath = `${user.id}/${meetingId}/recording.webm`;
+
+        const { data, error } = await supabase.storage
+            .from('meeting-recordings')
+            .createSignedUrl(filePath, 3600); // 1 hour validity
+
+        if (error) {
+            console.error('Error getting signed URL:', error);
+            return null;
+        }
+
+        return data.signedUrl;
+    },
+
     deleteMeeting: async (id: string) => {
+        const user = useAuthStore.getState().user;
+        if (!user) return;
+
         set({ isLoading: true });
         try {
+            // 1. Delete audio from Storage
+            const filePath = `${user.id}/${id}/recording.webm`;
+            const { error: storageError } = await supabase.storage
+                .from('meeting-recordings')
+                .remove([filePath]);
+
+            if (storageError) {
+                console.warn('Error deleting audio file (continuing to DB delete):', storageError);
+            }
+
+            // 2. Delete meeting from DB
             const { error } = await supabase
                 .from('meetings')
                 .delete()
@@ -116,6 +197,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
             }));
         } catch (error) {
             console.error('Error deleting meeting:', error);
+            throw error; // Re-throw to handle in UI
         } finally {
             set({ isLoading: false });
         }

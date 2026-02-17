@@ -23,7 +23,7 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
     const streamRef = useRef<MediaStream | null>(null);
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
+    const timerRef = useRef<number | null>(null);
     const audioContextRef = useRef<AudioContext | null>(null);
     const analyserRef = useRef<AnalyserNode | null>(null);
     const animationFrameRef = useRef<number | null>(null);
@@ -42,7 +42,7 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
 
     const cleanup = useCallback(() => {
         if (timerRef.current) {
-            clearInterval(timerRef.current);
+            window.clearInterval(timerRef.current);
             timerRef.current = null;
         }
         if (animationFrameRef.current) {
@@ -151,7 +151,7 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
 
             // Start timer
             setDuration(0);
-            timerRef.current = setInterval(() => {
+            timerRef.current = window.setInterval(() => {
                 setDuration(prev => prev + 1);
             }, 1000);
 
@@ -213,7 +213,7 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
 
             // Pause timer
             if (timerRef.current) {
-                clearInterval(timerRef.current);
+                window.clearInterval(timerRef.current);
                 timerRef.current = null;
             }
         }
@@ -230,7 +230,7 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
             }
 
             // Resume timer
-            timerRef.current = setInterval(() => {
+            timerRef.current = window.setInterval(() => {
                 setDuration(prev => prev + 1);
             }, 1000);
         }

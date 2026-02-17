@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from './components/ui/toaster';
+import { NewMeeting } from './pages/NewMeeting';
+import { MeetingDetail } from './pages/MeetingDetail';
 
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
@@ -18,7 +20,8 @@ function App() {
           user ? <Layout /> : <Navigate to="/login" />
         }>
           <Route index element={<Dashboard />} />
-          {/* More routes will be added in Phase 2 */}
+          <Route path="meetings/new" element={<NewMeeting />} />
+          <Route path="meeting/:id" element={<MeetingDetail />} />
         </Route>
       </Routes>
       <Toaster />

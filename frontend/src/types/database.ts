@@ -1,3 +1,4 @@
+// Database types for Supabase
 export type Meeting = {
     id: string;
     user_id: string;
