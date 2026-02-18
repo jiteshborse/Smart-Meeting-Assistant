@@ -7,9 +7,19 @@ import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import { useAuthStore } from './stores/authStore';
+import { useNetworkStatus } from './hooks/useNetworkStatus';
+import { syncOfflineMeetings } from './services/syncService';
+import { useEffect } from 'react';
 
 function App() {
   const { user } = useAuthStore();
+  const { isOnline } = useNetworkStatus();
+
+  useEffect(() => {
+    if (isOnline) {
+      syncOfflineMeetings();
+    }
+  }, [isOnline]);
 
   return (
     // <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">

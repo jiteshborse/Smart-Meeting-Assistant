@@ -9,10 +9,14 @@ import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useMeetingStore } from '../stores/meetingStore';
 import { useToast } from '../components/ui/use-toast';
 import { ArrowLeft, Save } from 'lucide-react';
+import { saveMeetingOffline } from '../lib/db';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
+
 
 export const NewMeeting: React.FC = () => {
     const navigate = useNavigate();
     const { toast } = useToast();
+    const { isOnline } = useNetworkStatus();
     const { createMeeting, updateMeeting, uploadAudio } = useMeetingStore();
 
     const [step, setStep] = useState<'setup' | 'recording' | 'save'>('setup');
@@ -85,46 +89,45 @@ export const NewMeeting: React.FC = () => {
         if (!meetingId || !audioBlob) return;
 
         try {
-            // Show saving toast immediately
-            toast({
-                title: 'Saving meeting...',
-                description: 'Uploading audio and finalizing details.',
-            });
+            if (isOnline) {
+                // Online: upload to Supabase
+                const audioUrl = await useMeetingStore.getState().uploadAudio(meetingId, audioBlob);
 
-            // Parallelize operations: Upload audio AND update meeting status
-            console.log('Starting upload. Blob size:', audioBlob.size, 'Type:', audioBlob.type);
-            const audioUploadPromise = uploadAudio(meetingId, audioBlob);
+                await updateMeeting(meetingId, {
+                    duration: recordingDuration,
+                    status: 'completed',
+                    metadata: {
+                        transcript: transcriptSegments,
+                        audio_url: audioUrl,
+                        audio_size: audioBlob.size,
+                        audio_type: audioBlob.type,
+                        word_count: transcriptSegments.reduce((acc, seg) =>
+                            acc + seg.text.split(' ').length, 0
+                        )
+                    }
+                });
 
-            // Wait for upload to complete to get the URL
-            const publicUrl = await audioUploadPromise;
-            console.log('Upload complete. Public URL:', publicUrl);
+                toast({
+                    title: 'Meeting saved',
+                    description: 'Your meeting has been saved successfully.'
+                });
+            } else {
+                // Offline: save to IndexedDB
+                await saveMeetingOffline(
+                    meetingId,
+                    meetingTitle,
+                    transcriptSegments,
+                    audioBlob
+                );
 
-            if (!publicUrl) {
-                throw new Error('Failed to upload audio');
+                toast({
+                    title: 'Meeting saved offline',
+                    description: 'Will sync when connection is restored.'
+                });
             }
 
-            // Final update with all details
-            console.log('Updating meeting status to completed...');
-            await updateMeeting(meetingId, {
-                duration: recordingDuration,
-                status: 'completed',
-                metadata: {
-                    transcript: transcriptSegments,
-                    audio_url: publicUrl,
-                    audio_size: audioBlob.size,
-                    audio_type: audioBlob.type
-                }
-            });
-
-            toast({
-                title: 'Meeting saved',
-                description: 'Your meeting has been saved successfully.'
-            });
-
-            // Navigate immediately
             navigate(`/meeting/${meetingId}`);
         } catch (error) {
-            console.error('Save error:', error);
             toast({
                 title: 'Error',
                 description: 'Failed to save meeting. Please try again.',
@@ -132,6 +135,14 @@ export const NewMeeting: React.FC = () => {
             });
         }
     };
+
+    {
+        !isOnline && (
+            <Badge variant="outline" className="bg-yellow-100 text-yellow-800">
+                Offline Mode
+            </Badge>
+        )
+    }
 
     return (
         <div className="container max-w-6xl mx-auto py-8">

@@ -166,6 +166,8 @@ export const useMeetingStore = create<MeetingState>((set) => ({
         return data.signedUrl;
     },
 
+
+
     deleteMeeting: async (id: string) => {
         const user = useAuthStore.getState().user;
         if (!user) return;

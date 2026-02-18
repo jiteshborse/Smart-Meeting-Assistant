@@ -2,9 +2,12 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
 import { Mic, Calendar, Users, FileText, Clock, ChevronRight } from 'lucide-react';
 import { useMeetingStore } from '../stores/meetingStore';
 import { formatDistanceToNow } from 'date-fns';
+import { formatDuration } from '../lib/utils';
+
 
 export default function Dashboard() {
     const navigate = useNavigate();
@@ -70,55 +73,41 @@ export default function Dashboard() {
                     <CardDescription>Your 5 most recent meetings</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {isLoading ? (
-                        <div className="text-center py-8">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                            <p className="mt-2 text-muted-foreground">Loading meetings...</p>
-                        </div>
-                    ) : recentMeetings.length > 0 ? (
+                    {meetings.length > 0 ? (
                         <div className="space-y-4">
-                            {recentMeetings.map((meeting) => (
+                            {meetings.slice(0, 5).map((meeting) => (
                                 <div
                                     key={meeting.id}
-                                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors cursor-pointer"
+                                    className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
                                     onClick={() => navigate(`/meeting/${meeting.id}`)}
                                 >
-                                    <div className="flex items-center gap-4">
-                                        <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                                            <Mic className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                                        </div>
-                                        <div>
-                                            <h3 className="font-semibold">{meeting.title}</h3>
-                                            <p className="text-sm text-muted-foreground flex items-center gap-1">
-                                                <Calendar className="h-3 w-3" />
-                                                {formatDistanceToNow(new Date(meeting.created_at), { addSuffix: true })}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-4">
-                                        <div className="text-right hidden sm:block">
-                                            <div className="text-sm font-medium flex items-center justify-end gap-1">
-                                                <Clock className="h-3 w-3" />
-                                                {Math.floor((meeting.duration || 0) / 60)}m {(meeting.duration || 0) % 60}s
-                                            </div>
-                                            <div className={`text-xs px-2 py-0.5 rounded-full inline-block mt-1 ${meeting.status === 'completed'
-                                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                                                    : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
-                                                }`}>
-                                                {meeting.status}
+                                    <div>
+                                        <h3 className="font-medium">{meeting.title}</h3>
+                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                            <span>{new Date(meeting.created_at).toLocaleDateString()}</span>
+                                            <span>•</span>
+                                            <div className="flex items-center">
+                                                <Clock className="h-3 w-3 mr-1" />
+                                                {formatDuration(meeting.duration || 0)}
                                             </div>
                                         </div>
-                                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
                                     </div>
+                                    <Badge variant={meeting.status === 'completed' ? 'default' : 'secondary'}>
+                                        {meeting.status}
+                                    </Badge>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <div className="text-center py-12 text-muted-foreground">
-                            <FileText className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                            <p className="text-lg font-medium">No meetings yet</p>
-                            <p className="text-sm mb-6">Start recording your first meeting to get started</p>
-                            <Button onClick={() => navigate('/meetings/new')}>
+                        <div className="text-center py-8 text-muted-foreground">
+                            <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                            <p>No meetings yet</p>
+                            <p className="text-sm">Start recording your first meeting</p>
+                            <Button
+                                className="mt-4"
+                                variant="outline"
+                                onClick={() => navigate('/meetings/new')}
+                            >
                                 <Mic className="mr-2 h-4 w-4" />
                                 Start Recording
                             </Button>
