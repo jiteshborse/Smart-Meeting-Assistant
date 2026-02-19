@@ -14,6 +14,7 @@ interface MeetingState {
     setCurrentMeeting: (meeting: Meeting | null) => void;
     uploadAudio: (meetingId: string, audioBlob: Blob) => Promise<string | null>;
     getAudioUrl: (meetingId: string) => Promise<string | null>;
+    analyzeMeeting: (meetingId: string, transcript: string) => Promise<void>;
 }
 
 export const useMeetingStore = create<MeetingState>((set) => ({
@@ -164,6 +165,53 @@ export const useMeetingStore = create<MeetingState>((set) => ({
         }
 
         return data.signedUrl;
+    },
+
+    analyzeMeeting: async (meetingId: string, transcript: string) => {
+        set({ isLoading: true });
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error('No active session');
+
+            const response = await fetch('http://localhost:3001/api/ai/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ meetingId, transcript })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Analysis failed');
+            }
+
+            const analysis = await response.json();
+
+            // Store updates locally
+            set((state) => {
+                const updatedMeeting = state.meetings.find(m => m.id === meetingId);
+                if (!updatedMeeting) return state;
+
+                const newMetadata = {
+                    ...updatedMeeting.metadata,
+                    ai_analysis: analysis
+                };
+
+                const newMeeting = { ...updatedMeeting, metadata: newMetadata };
+
+                return {
+                    meetings: state.meetings.map(m => m.id === meetingId ? newMeeting : m),
+                    currentMeeting: state.currentMeeting?.id === meetingId ? newMeeting : state.currentMeeting
+                };
+            });
+        } catch (error) {
+            console.error('Error analyzing meeting:', error);
+            throw error;
+        } finally {
+            set({ isLoading: false });
+        }
     },
 
 

@@ -1,0 +1,64 @@
+Testing AI Service...
+API Key present: true
+Model: gemini-2.5-flash
+Analysis Result:
+{
+  "summary": {
+    "executive": "The meeting focused on prioritizing the Q3 roadmap, specifically addressing critical updates for the mobile application and reviewing the status of the new dashboard. Key action items were assigned to ensure these priorities are met efficiently.",
+    "detailed": "The meeting commenced with Speaker A initiating a discussion on the Q3 roadmap. Speaker B promptly highlighted the urgent need for a mobile app update, citing numerous user complaints regarding existing bugs. This critical issue was immediately escalated and designated as a P0 priority by Speaker A.\n\nThe discussion then transitioned to the new dashboard project. Speaker C provided an update, indicating that the dashboard was largely complete, requiring only final quality assurance. Speaker C committed to finalizing this task by the following week.\n\nFollowing these updates, Speaker A proceeded to formalize the action items. Speaker B was assigned the lead role for the mobile app update, while Speaker C was tasked with completing the dashboard. Speaker B requested assistance with the backend development for the mobile application.\n\nIn response to Speaker B's request, Speaker A confirmed that Dave would be assigned to provide the necessary support for the mobile app's backend, ensuring the P0 priority task receives adequate resources.",
+    "bulletPoints": [
+      "Q3 roadmap discussion initiated.",
+      "Mobile app update prioritized as P0 due to user bug complaints.",
+      "New dashboard is mostly complete and requires QA, with completion expected by next week.",
+      "Speaker B assigned to lead the mobile app update.",
+      "Speaker C assigned to finish the new dashboard.",
+      "Dave assigned to assist Speaker B with the mobile app backend."
+    ]
+  },
+  "actionItems": [
+    {
+      "description": "Lead the mobile app update.",
+      "assignee": "Speaker B",
+      "dueDate": null,
+      "priority": "high"
+    },
+    {
+      "description": "Finish the new dashboard, including QA.",
+      "assignee": "Speaker C",
+      "dueDate": null,
+      "priority": "medium"
+    },
+    {
+      "description": "Help with the backend for the mobile app.",
+      "assignee": "Dave",
+      "dueDate": null,
+      "priority": "high"
+    }
+  ],
+  "decisions": [
+    {
+      "description": "Prioritize the mobile app update as P0 due to user bug complaints.",
+      "consensus": "unanimous"
+    }
+  ],
+  "topics": [
+    {
+      "name": "Q3 Roadmap",
+      "relevance": 1
+    },
+    {
+      "name": "Mobile App Update",
+      "relevance": 0.9
+    },
+    {
+      "name": "New Dashboard Status",
+      "relevance": 0.7
+    }
+  ],
+  "sentiment": {
+    "score": 0.7,
+    "magnitude": 0.6,
+    "primaryEmotion": "positive"
+  },
+  "suggestedTitle": "Q3 Roadmap: Mobile App Prioritization & Dashboard Status"
+}

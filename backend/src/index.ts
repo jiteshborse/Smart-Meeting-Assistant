@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import aiRoutes from './routes/ai.routes';
 
 // Load environment variables
 dotenv.config();
@@ -51,31 +52,9 @@ app.get('/api', (req: Request, res: Response) => {
     });
 });
 
-// Transcription endpoint
-import { transcribeAudio } from './services/assemblyai';
-
-app.post('/api/transcribe', async (req: Request, res: Response) => {
-    try {
-        const { audioUrl, meetingId } = req.body;
-
-        if (!audioUrl || !meetingId) {
-            return res.status(400).json({ error: 'Missing audioUrl or meetingId' });
-        }
-
-        // Start processing (async)
-        // In a real production app, use a queue (Bull/Redis)
-        transcribeAudio(audioUrl, meetingId)
-            .then(() => console.log(`Transcription completed for ${meetingId}`))
-            .catch(err => console.error(`Transcription failed for ${meetingId}:`, err));
-
-        res.json({ message: 'Transcription started', status: 'processing' });
-    } catch (error) {
-        console.error('Transcription request error:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
 
 // 404 handler
+app.use('/api/ai', aiRoutes);
 app.use((req: Request, res: Response) => {
     res.status(404).json({
         error: 'Not Found',

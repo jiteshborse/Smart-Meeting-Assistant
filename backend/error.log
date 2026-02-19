@@ -1,0 +1,69 @@
+[2026-02-19T07:19:31.644Z] AI Error: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (D:\Projects\Smart Meeting Assistant\backend\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async makeRequest (D:\Projects\Smart Meeting Assistant\backend\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at async generateContent (D:\Projects\Smart Meeting Assistant\backend\node_modules\@google\generative-ai\dist\index.js:867:22)
+    at async D:\Projects\Smart Meeting Assistant\backend\src\services\ai.service.ts:174:32
+    at async AIService.retryOperation (D:\Projects\Smart Meeting Assistant\backend\src\services\ai.service.ts:110:24)
+    at async test (D:\Projects\Smart Meeting Assistant\backend\src\scripts\test-ai.ts:35:24)
+[2026-02-19T07:19:56.569Z] AI Error: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (D:\Projects\Smart Meeting Assistant\backend\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async makeRequest (D:\Projects\Smart Meeting Assistant\backend\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at async generateContent (D:\Projects\Smart Meeting Assistant\backend\node_modules\@google\generative-ai\dist\index.js:867:22)
+    at async D:\Projects\Smart Meeting Assistant\backend\src\services\ai.service.ts:174:32
+    at async AIService.retryOperation (D:\Projects\Smart Meeting Assistant\backend\src\services\ai.service.ts:110:24)
+    at async test (D:\Projects\Smart Meeting Assistant\backend\src\scripts\test-ai.ts:35:24)
+[2026-02-19T07:26:04.383Z] AI Error: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent: [404 Not Found] models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent: [404 Not Found] models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (D:\Projects\Smart Meeting Assistant\backend\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async makeRequest (D:\Projects\Smart Meeting Assistant\backend\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at async generateContent (D:\Projects\Smart Meeting Assistant\backend\node_modules\@google\generative-ai\dist\index.js:867:22)
+    at async D:\Projects\Smart Meeting Assistant\backend\src\services\ai.service.ts:174:32
+    at async AIService.retryOperation (D:\Projects\Smart Meeting Assistant\backend\src\services\ai.service.ts:110:24)
+    at async test (D:\Projects\Smart Meeting Assistant\backend\src\scripts\test-ai.ts:35:24)
+[2026-02-19T07:28:36.158Z] AI Error: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-001:generateContent: [404 Not Found] models/gemini-1.5-flash-001 is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-001:generateContent: [404 Not Found] models/gemini-1.5-flash-001 is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (D:\Projects\Smart Meeting Assistant\backend\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async makeRequest (D:\Projects\Smart Meeting Assistant\backend\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at async generateContent (D:\Projects\Smart Meeting Assistant\backend\node_modules\@google\generative-ai\dist\index.js:867:22)
+    at async D:\Projects\Smart Meeting Assistant\backend\src\services\ai.service.ts:174:32
+    at async AIService.retryOperation (D:\Projects\Smart Meeting Assistant\backend\src\services\ai.service.ts:110:24)
+    at async test (D:\Projects\Smart Meeting Assistant\backend\src\scripts\test-ai.ts:35:24)
+[2026-02-19T07:29:33.120Z] AI Error: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent: [404 Not Found] models/gemini-1.5-flash-latest is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent: [404 Not Found] models/gemini-1.5-flash-latest is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (D:\Projects\Smart Meeting Assistant\backend\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async makeRequest (D:\Projects\Smart Meeting Assistant\backend\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at async generateContent (D:\Projects\Smart Meeting Assistant\backend\node_modules\@google\generative-ai\dist\index.js:867:22)
+    at async D:\Projects\Smart Meeting Assistant\backend\src\services\ai.service.ts:174:32
+    at async AIService.retryOperation (D:\Projects\Smart Meeting Assistant\backend\src\services\ai.service.ts:110:24)
+    at async test (D:\Projects\Smart Meeting Assistant\backend\src\scripts\test-ai.ts:35:24)
+[2026-02-19T07:32:06.734Z] AI Error: Error: No JSON found in response
+Stack: Error: No JSON found in response
+    at D:\Projects\Smart Meeting Assistant\backend\src\services\ai.service.ts:182:27
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async AIService.retryOperation (D:\Projects\Smart Meeting Assistant\backend\src\services\ai.service.ts:110:24)
+    at async test (D:\Projects\Smart Meeting Assistant\backend\src\scripts\test-ai.ts:35:24)
+[2026-02-19T07:32:52.582Z] AI Error: SyntaxError: Expected ',' or ']' after array element in JSON at position 2212
+Stack: SyntaxError: Expected ',' or ']' after array element in JSON at position 2212
+    at JSON.parse (<anonymous>)
+    at D:\Projects\Smart Meeting Assistant\backend\src\services\ai.service.ts:187:37
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async AIService.retryOperation (D:\Projects\Smart Meeting Assistant\backend\src\services\ai.service.ts:110:24)
+    at async test (D:\Projects\Smart Meeting Assistant\backend\src\scripts\test-ai.ts:35:24)
+[No JSON] Raw: ```json
+{
+  "summary": {
+    "executive": "The meeting focused on the Q3 roadmap, with a primary decision to prioritize the mobile app update as P0 due to user bug complaints. The status of the new dashboard was also reviewed, with Speaker C committing to its completion by next week. Key action items and assignments were made to ensure progress on both fronts.",
+    "
+[2026-02-19T07:33:41.613Z] AI Error: Error: No JSON found in response
+Stack: Error: No JSON found in response
+    at D:\Projects\Smart Meeting Assistant\backend\src\services\ai.service.ts:183:27
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async AIService.retryOperation (D:\Projects\Smart Meeting Assistant\backend\src\services\ai.service.ts:110:24)
+    at async test (D:\Projects\Smart Meeting Assistant\backend\src\scripts\test-ai.ts:35:24)

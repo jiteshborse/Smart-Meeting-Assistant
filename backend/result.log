@@ -1,0 +1,78 @@
+[dotenv@17.3.1] injecting env (8) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+Testing AI Service...
+API Key present: true
+Model: gemini-1.5-pro
+AI Analysis failed: GoogleGenerativeAIFetchError: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent: [404 Not Found] models/gemini-1.5-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (D:\Projects\Smart Meeting Assistant\backend\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async makeRequest (D:\Projects\Smart Meeting Assistant\backend\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at async generateContent (D:\Projects\Smart Meeting Assistant\backend\node_modules\@google\generative-ai\dist\index.js:867:22)
+    at async D:\Projects\Smart Meeting Assistant\backend\src\services\ai.service.ts:173:32
+    at async AIService.retryOperation (D:\Projects\Smart Meeting Assistant\backend\src\services\ai.service.ts:109:24)
+    at async test (D:\Projects\Smart Meeting Assistant\backend\src\scripts\test-ai.ts:35:24) {
+  status: 404,
+  statusText: 'Not Found',
+  errorDetails: undefined
+}
+Analysis Result:
+{
+  "summary": {
+    "executive": "The team discussed project milestones and identified key action items for the upcoming quarter.",
+    "detailed": "The meeting covered three main areas: project timeline review, resource allocation, and risk assessment. The team agreed to prioritize the Q3 launch and reallocate resources from the legacy system migration. Several risks were identified including potential delays in the design phase and dependencies on external vendors.",
+    "bulletPoints": [
+      "Q3 launch is top priority",
+      "Need to reallocate two developers from legacy migration",
+      "External vendor contract needs review by Friday",
+      "Design phase may cause delays"
+    ]
+  },
+  "actionItems": [
+    {
+      "description": "Review external vendor contract",
+      "assignee": "Sarah",
+      "dueDate": "2026-02-26",
+      "priority": "high"
+    },
+    {
+      "description": "Update project timeline with new resources",
+      "assignee": "Mike",
+      "dueDate": "2026-02-22",
+      "priority": "medium"
+    }
+  ],
+  "decisions": [
+    {
+      "description": "Prioritize Q3 launch over legacy migration",
+      "consensus": "unanimous"
+    },
+    {
+      "description": "Approach vendor for contract extension",
+      "consensus": "majority"
+    }
+  ],
+  "topics": [
+    {
+      "name": "Project Timeline",
+      "relevance": 0.9
+    },
+    {
+      "name": "Resource Allocation",
+      "relevance": 0.8
+    },
+    {
+      "name": "Risk Management",
+      "relevance": 0.7
+    },
+    {
+      "name": "Vendor Contracts",
+      "relevance": 0.6
+    }
+  ],
+  "sentiment": {
+    "score": 0.3,
+    "magnitude": 0.5,
+    "primaryEmotion": "positive"
+  },
+  "suggestedTitle": "Q3 Planning & Resource Review"
+}
