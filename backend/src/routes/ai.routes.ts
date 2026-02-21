@@ -31,19 +31,29 @@ router.post('/analyze', async (req: Request, res: Response) => {
         // Perform AI analysis
         const analysis = await aiService.analyzeMeeting(transcript);
 
-        // If meetingId provided, store results
+        // If meetingId provided, store results in the metadata JSONB column
         if (meetingId) {
+            // First, fetch the existing metadata so we don't overwrite it
+            const { data: existingMeeting, error: fetchError } = await supabaseAdmin
+                .from('meetings')
+                .select('metadata')
+                .eq('id', meetingId)
+                .eq('user_id', user.id)
+                .single();
+
+            if (fetchError) {
+                console.error('Error fetching existing meeting metadata:', fetchError);
+            }
+
+            const existingMetadata = existingMeeting?.metadata || {};
+
             const { error: updateError } = await supabaseAdmin
                 .from('meetings')
                 .update({
-                    summary: analysis.summary,
-                    decisions: analysis.decisions,
-                    sentiment: analysis.sentiment.score,
-                    topics: analysis.topics.map(t => t.name),
+                    status: 'completed',
                     metadata: {
-                        action_items: analysis.actionItems,
-                        topics_full: analysis.topics,
-                        sentiment_full: analysis.sentiment
+                        ...existingMetadata,
+                        ai_analysis: analysis
                     }
                 })
                 .eq('id', meetingId)
@@ -51,6 +61,8 @@ router.post('/analyze', async (req: Request, res: Response) => {
 
             if (updateError) {
                 console.error('Error updating meeting with AI data:', updateError);
+            } else {
+                console.log(`✅ AI analysis saved to meeting ${meetingId}`);
             }
         }
 

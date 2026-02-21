@@ -189,23 +189,34 @@ export const useMeetingStore = create<MeetingState>((set) => ({
 
             const analysis = await response.json();
 
-            // Store updates locally
-            set((state) => {
-                const updatedMeeting = state.meetings.find(m => m.id === meetingId);
-                if (!updatedMeeting) return state;
+            // Re-fetch the updated meeting from Supabase to get persisted data
+            const { data: updatedMeeting, error: fetchError } = await supabase
+                .from('meetings')
+                .select('*')
+                .eq('id', meetingId)
+                .single();
 
-                const newMetadata = {
-                    ...updatedMeeting.metadata,
-                    ai_analysis: analysis
-                };
-
-                const newMeeting = { ...updatedMeeting, metadata: newMetadata };
-
-                return {
-                    meetings: state.meetings.map(m => m.id === meetingId ? newMeeting : m),
-                    currentMeeting: state.currentMeeting?.id === meetingId ? newMeeting : state.currentMeeting
-                };
-            });
+            if (fetchError || !updatedMeeting) {
+                // Fallback: patch local state with the returned analysis
+                set((state) => {
+                    const meeting = state.meetings.find(m => m.id === meetingId);
+                    if (!meeting) return state;
+                    const newMeeting = {
+                        ...meeting,
+                        metadata: { ...meeting.metadata, ai_analysis: analysis }
+                    };
+                    return {
+                        meetings: state.meetings.map(m => m.id === meetingId ? newMeeting : m),
+                        currentMeeting: state.currentMeeting?.id === meetingId ? newMeeting : state.currentMeeting
+                    };
+                });
+            } else {
+                // Update local state with server-persisted data
+                set((state) => ({
+                    meetings: state.meetings.map(m => m.id === meetingId ? updatedMeeting : m),
+                    currentMeeting: state.currentMeeting?.id === meetingId ? updatedMeeting : state.currentMeeting
+                }));
+            }
         } catch (error) {
             console.error('Error analyzing meeting:', error);
             throw error;

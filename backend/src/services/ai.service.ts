@@ -1,18 +1,16 @@
-import { GoogleGenerativeAI, GenerativeModel, GenerateContentResult } from '@google/generative-ai';
+import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 import dotenv from 'dotenv';
 import { z } from 'zod';
-
 
 dotenv.config();
 
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 const model = genAI.getGenerativeModel({
-    model: process.env.GEMINI_MODEL || 'gemini-1.5-pro',
+    model: process.env.GEMINI_MODEL || 'gemini-2.0-flash',
     generationConfig: {
-        temperature: 0.2, // Low temperature for consistent JSON
-        maxOutputTokens: 8192,
-        responseMimeType: 'application/json',
+        temperature: 0.2,
+        responseMimeType: 'application/json', // Forces Gemini to output pure JSON
     }
 });
 
@@ -37,12 +35,12 @@ export interface Decision {
 
 export interface Topic {
     name: string;
-    relevance: number; // 0-1
+    relevance: number;
 }
 
 export interface SentimentAnalysis {
-    score: number; // -1 to 1
-    magnitude: number; // 0-1
+    score: number;
+    magnitude: number;
     primaryEmotion: 'positive' | 'negative' | 'neutral' | 'mixed';
 }
 
@@ -55,11 +53,11 @@ export interface AIAnalysisResult {
     suggestedTitle?: string;
 }
 
-// Validation schemas
+// Relaxed validation schemas — accept what Gemini gives us
 const SummarySchema = z.object({
-    executive: z.string().min(10),
-    detailed: z.string().min(50),
-    bulletPoints: z.array(z.string()).min(3)
+    executive: z.string().min(1),
+    detailed: z.string().min(1),
+    bulletPoints: z.array(z.string()).min(1)
 });
 
 const ActionItemSchema = z.object({
@@ -96,116 +94,131 @@ const AIAnalysisSchema = z.object({
 
 export class AIService {
     private model: GenerativeModel;
-    private retryCount: number = 3;
-    private retryDelay: number = 1000; // ms
 
     constructor() {
         this.model = model;
     }
 
-    private async retryOperation<T>(operation: () => Promise<T>): Promise<T> {
-        for (let i = 0; i < this.retryCount; i++) {
-            try {
-                return await operation();
-            } catch (error) {
-                console.error(`AI operation failed (attempt ${i + 1}):`, error);
-                if (i === this.retryCount - 1) throw error;
-                await new Promise(resolve => setTimeout(resolve, this.retryDelay * Math.pow(2, i)));
-            }
-        }
-        throw new Error('Retry count exceeded');
-    }
-
     private buildPrompt(transcript: string): string {
-        return `
-You are an expert meeting analyst. Analyze the following meeting transcript and provide a comprehensive analysis.
+        return `You are an expert meeting analyst. Analyze the following meeting transcript and return a JSON object.
 
 TRANSCRIPT:
 ${transcript}
 
-Provide a JSON response with the following structure:
+Return this exact JSON structure:
 {
   "summary": {
-    "executive": "One paragraph executive summary (2-3 sentences)",
-    "detailed": "Detailed summary covering all key points (3-4 paragraphs)",
-    "bulletPoints": ["Key point 1", "Key point 2", "Key point 3", ...]
+    "executive": "2-3 sentence executive summary of the meeting",
+    "detailed": "Detailed multi-paragraph summary of the meeting",
+    "bulletPoints": ["Key point 1", "Key point 2", "Key point 3"]
   },
   "actionItems": [
     {
-      "description": "Clear description of the task",
-      "assignee": "Person assigned or null if unclear",
-      "dueDate": "YYYY-MM-DD or null if not specified",
-      "priority": "high/medium/low"
+      "description": "Task description",
+      "assignee": "Person name or null",
+      "dueDate": "YYYY-MM-DD or null",
+      "priority": "high"
     }
   ],
   "decisions": [
     {
-      "description": "Decision made",
-      "consensus": "unanimous/majority/contested"
+      "description": "What was decided",
+      "consensus": "unanimous"
     }
   ],
   "topics": [
     {
-      "name": "Topic name",
-      "relevance": 0.0-1.0
+      "name": "Topic discussed",
+      "relevance": 0.9
     }
   ],
   "sentiment": {
-    "score": -1.0 to 1.0,
-    "magnitude": 0.0 to 1.0,
-    "primaryEmotion": "positive/negative/neutral/mixed"
+    "score": 0.5,
+    "magnitude": 0.5,
+    "primaryEmotion": "positive"
   },
-  "suggestedTitle": "A better title for this meeting (optional)"
+  "suggestedTitle": "Meeting title suggestion"
 }
 
-Focus on accuracy. If information isn't available, use null or empty arrays.
-Ensure the response is valid JSON.
-`;
+IMPORTANT RULES:
+- Base ALL content strictly on what is in the transcript. Do not invent information.
+- priority must be one of: "high", "medium", "low"
+- consensus must be one of: "unanimous", "majority", "contested"
+- primaryEmotion must be one of: "positive", "negative", "neutral", "mixed"
+- score ranges from -1.0 to 1.0, magnitude from 0.0 to 1.0
+- Use null for unknown values, empty arrays [] if no items exist
+- bulletPoints must have at least 1 item`;
     }
 
     async analyzeMeeting(transcript: string): Promise<AIAnalysisResult> {
-        return this.retryOperation(async () => {
+        console.log('[AI] Starting analysis, transcript length:', transcript.length);
+        console.log('[AI] Using model:', process.env.GEMINI_MODEL || 'gemini-2.0-flash');
+        console.log('[AI] API Key present:', !!process.env.GEMINI_API_KEY);
+
+        try {
+            const prompt = this.buildPrompt(transcript);
+
+            console.log('[AI] Calling Gemini API...');
+            const result = await this.model.generateContent(prompt);
+            const response = await result.response;
+            const text = response.text();
+
+            console.log('[AI] Got response, length:', text.length);
+            console.log('[AI] Response preview:', text.substring(0, 200));
+
+            // Parse the JSON — responseMimeType ensures it's pure JSON
+            let parsed: any;
             try {
-                // Build prompt
-                const prompt = this.buildPrompt(transcript);
-
-                // Call Gemini
-                const result = await this.model.generateContent(prompt);
-                const response = await result.response;
-                const text = response.text();
-
-                // Extract JSON from response (Gemini might wrap in markdown)
-                const jsonMatch = text.match(/\{[\s\S]*\}/);
-                if (!jsonMatch) {
-                    throw new Error('No JSON found in response');
-                }
-
-                const jsonStr = jsonMatch[0];
-                const parsed = JSON.parse(jsonStr);
-
-                // Validate with Zod
-                try {
-                    const validated = AIAnalysisSchema.parse(parsed);
-                    return validated;
-                } catch (zodError) {
-                    console.error('Zod Validation Error:', zodError);
-                    throw zodError;
-                }
-            } catch (error) {
-                console.error('AI Analysis failed:', error);
-
-                // If it's an API key error, we should probably crash or warn explicitly
-                if (error instanceof Error && error.message.includes('API key')) {
-                    console.error('CRITICAL: Gemini API Key missing or invalid');
-                }
-
-                // Return fallback data for development
-                return this.getFallbackAnalysis();
+                parsed = JSON.parse(text);
+            } catch (parseError) {
+                console.error('[AI] JSON parse failed, trying to extract...');
+                console.error('[AI] Raw text:', text.substring(0, 500));
+                // Try extracting from markdown fences as fallback
+                const extracted = this.extractJSON(text);
+                parsed = JSON.parse(extracted);
             }
-        });
+
+            console.log('[AI] Parsed JSON keys:', Object.keys(parsed));
+
+            // Validate with Zod
+            const validated = AIAnalysisSchema.parse(parsed);
+            console.log('[AI] ✅ Analysis validated successfully');
+            return validated;
+
+        } catch (error: any) {
+            console.error('[AI] ❌ Analysis failed:', error.message || error);
+
+            if (error?.message?.includes('API key')) {
+                console.error('[AI] CRITICAL: Gemini API Key is missing or invalid!');
+            }
+            if (error?.status === 404) {
+                console.error(`[AI] CRITICAL: Model "${process.env.GEMINI_MODEL}" not found. Check GEMINI_MODEL in .env`);
+            }
+            if (error?.issues) {
+                // Zod validation error
+                console.error('[AI] Zod validation errors:', JSON.stringify(error.issues, null, 2));
+            }
+
+            throw error; // Let the route handler deal with it
+        }
     }
 
-    // Simplified version for quick summaries
+    /**
+     * Extracts JSON from text that may be wrapped in markdown code fences.
+     */
+    private extractJSON(text: string): string {
+        const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+        if (fenceMatch && fenceMatch[1]) {
+            return fenceMatch[1].trim();
+        }
+        // Try finding a JSON object
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            return jsonMatch[0];
+        }
+        throw new Error('No JSON found in response');
+    }
+
     async generateQuickSummary(transcript: string): Promise<string> {
         try {
             const prompt = `Summarize this meeting in 2-3 sentences: ${transcript}`;
@@ -216,58 +229,6 @@ Ensure the response is valid JSON.
             console.error('Quick summary failed:', error);
             return 'Summary generation failed. Please try again.';
         }
-    }
-
-    // Fallback data for development/testing
-    private getFallbackAnalysis(): AIAnalysisResult {
-        return {
-            summary: {
-                executive: "The team discussed project milestones and identified key action items for the upcoming quarter.",
-                detailed: "The meeting covered three main areas: project timeline review, resource allocation, and risk assessment. The team agreed to prioritize the Q3 launch and reallocate resources from the legacy system migration. Several risks were identified including potential delays in the design phase and dependencies on external vendors.",
-                bulletPoints: [
-                    "Q3 launch is top priority",
-                    "Need to reallocate two developers from legacy migration",
-                    "External vendor contract needs review by Friday",
-                    "Design phase may cause delays"
-                ]
-            },
-            actionItems: [
-                {
-                    description: "Review external vendor contract",
-                    assignee: "Sarah",
-                    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                    priority: "high"
-                },
-                {
-                    description: "Update project timeline with new resources",
-                    assignee: "Mike",
-                    dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                    priority: "medium"
-                }
-            ],
-            decisions: [
-                {
-                    description: "Prioritize Q3 launch over legacy migration",
-                    consensus: "unanimous"
-                },
-                {
-                    description: "Approach vendor for contract extension",
-                    consensus: "majority"
-                }
-            ],
-            topics: [
-                { name: "Project Timeline", relevance: 0.9 },
-                { name: "Resource Allocation", relevance: 0.8 },
-                { name: "Risk Management", relevance: 0.7 },
-                { name: "Vendor Contracts", relevance: 0.6 }
-            ],
-            sentiment: {
-                score: 0.3,
-                magnitude: 0.5,
-                primaryEmotion: "positive"
-            },
-            suggestedTitle: "Q3 Planning & Resource Review"
-        };
     }
 }
 

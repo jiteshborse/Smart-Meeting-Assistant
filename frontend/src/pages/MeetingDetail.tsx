@@ -5,6 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { ScrollArea } from '../components/ui/scroll-area';
 import { Badge } from '../components/ui/badge';
 import { useMeetingStore } from '../stores/meetingStore';
+import type { ActionItem } from '../types/database';
+import { ActionItems } from '../components/meeting/ActionItems';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Decisions } from '../components/meeting/Decisions';
+import { Topics } from '../components/meeting/Topics';
+import { SentimentMeter } from '../components/meeting/SentimentMeter';
+import { SummaryTabs } from '../components/meeting/SummaryTabs';
 import { useToast } from '../components/ui/use-toast';
 import {
     ArrowLeft,
@@ -16,9 +23,8 @@ import {
     Calendar,
     Brain
 } from 'lucide-react';
-import { formatDuration, formatFileSize } from '../lib/utils';
+import { formatDuration } from '../lib/utils';
 import { ConfirmDialog } from '../components/ui/confirm-dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { AIInsights } from '../components/meeting/AIInsights';
 
 interface TranscriptSegment {
@@ -29,9 +35,11 @@ interface TranscriptSegment {
     isFinal: boolean;
 }
 
+
+
 export const MeetingDetail: React.FC = () => {
-    // ... existing hooks ...
     const { id } = useParams<{ id: string }>();
+    const [actionItems, setActionItems] = useState<ActionItem[]>([]);
     const navigate = useNavigate();
     const { toast } = useToast();
 
@@ -41,6 +49,23 @@ export const MeetingDetail: React.FC = () => {
     const [isDeleting, setIsDeleting] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+    // Transform AI analysis action items into the ActionItem format
+    useEffect(() => {
+        if (currentMeeting?.metadata?.ai_analysis?.actionItems) {
+            const transformed: ActionItem[] = currentMeeting.metadata.ai_analysis.actionItems.map(
+                (item, index) => ({
+                    id: `action-${index}`,
+                    description: item.description,
+                    assignee: item.assignee,
+                    due_date: item.dueDate,
+                    priority: item.priority,
+                    status: 'pending' as const,
+                })
+            );
+            setActionItems(transformed);
+        }
+    }, [currentMeeting]);
 
     // Fetch meetings if not loaded
     useEffect(() => {
@@ -56,13 +81,20 @@ export const MeetingDetail: React.FC = () => {
             setCurrentMeeting(meeting);
 
             if (meeting?.metadata) {
-                // Parse transcript from metadata
                 if (meeting.metadata.transcript) {
                     setTranscript(meeting.metadata.transcript as TranscriptSegment[]);
                 }
             }
         }
     }, [id, meetings, setCurrentMeeting]);
+
+    const handleActionItemStatus = async (itemId: string, status: string) => {
+        setActionItems(prev =>
+            prev.map(item =>
+                item.id === itemId ? { ...item, status: status as any } : item
+            )
+        );
+    };
 
     const handleAnalyze = async () => {
         if (!currentMeeting || !transcript.length) return;
@@ -137,15 +169,13 @@ export const MeetingDetail: React.FC = () => {
     };
 
     if (!currentMeeting) {
-        // ... existing loading state ...
-        return null; // Simplified for brevity
+        return null;
     }
 
     return (
         <div className="container max-w-6xl mx-auto py-8">
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
-                {/* ... existing header content ... */}
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
                         <ArrowLeft className="h-5 w-5" />
@@ -219,19 +249,13 @@ export const MeetingDetail: React.FC = () => {
                 </Card>
             )}
 
+            {/* 4-Tab Layout */}
             <Tabs defaultValue="transcript" className="w-full">
-                <TabsList className="mb-4">
-                    <TabsTrigger value="transcript" className="flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
-                        Transcript
-                    </TabsTrigger>
-                    <TabsTrigger value="insights" className="flex items-center gap-2">
-                        <Brain className="h-4 w-4" />
-                        AI Insights
-                        {currentMeeting.metadata?.ai_analysis && (
-                            <Badge variant="secondary" className="ml-1 text-xs bg-purple-100 text-purple-700">New</Badge>
-                        )}
-                    </TabsTrigger>
+                <TabsList className="grid w-full grid-cols-4">
+                    <TabsTrigger value="transcript">Transcript</TabsTrigger>
+                    <TabsTrigger value="summary">Summary</TabsTrigger>
+                    <TabsTrigger value="actions">Actions</TabsTrigger>
+                    <TabsTrigger value="insights">Insights</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="transcript">
@@ -265,9 +289,43 @@ export const MeetingDetail: React.FC = () => {
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="insights">
+                <TabsContent value="summary">
+                    {currentMeeting.metadata?.ai_analysis?.summary ? (
+                        <SummaryTabs summary={currentMeeting.metadata.ai_analysis.summary} />
+                    ) : (
+                        <div className="text-center py-8 text-muted-foreground">
+                            <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                            <p>No summary yet. Run AI analysis to generate.</p>
+                            <Button
+                                variant="link"
+                                onClick={handleAnalyze}
+                                disabled={isAnalyzing || transcript.length === 0}
+                            >
+                                Generate now
+                            </Button>
+                        </div>
+                    )}
+                </TabsContent>
+
+                <TabsContent value="actions">
+                    <ActionItems
+                        items={actionItems}
+                        onStatusChange={handleActionItemStatus}
+                    />
+                </TabsContent>
+
+                <TabsContent value="insights" className="space-y-6">
                     {currentMeeting.metadata?.ai_analysis ? (
-                        <AIInsights analysis={currentMeeting.metadata.ai_analysis} />
+                        <>
+                            {/* Sentiment */}
+                            <SentimentMeter sentiment={currentMeeting.metadata.ai_analysis.sentiment} />
+
+                            {/* Decisions */}
+                            <Decisions decisions={currentMeeting.metadata.ai_analysis.decisions || []} />
+
+                            {/* Topics */}
+                            <Topics topics={currentMeeting.metadata.ai_analysis.topics || []} />
+                        </>
                     ) : (
                         <div className="text-center py-12 text-muted-foreground">
                             <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />

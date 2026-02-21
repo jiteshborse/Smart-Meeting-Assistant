@@ -1,3 +1,19 @@
+export interface Decision {
+    description: string;
+    consensus: 'unanimous' | 'majority' | 'contested';
+}
+
+export interface Topic {
+    name: string;
+    relevance: number;
+}
+
+export interface Sentiment {
+    score: number;
+    magnitude: number;
+    primaryEmotion: 'positive' | 'negative' | 'neutral' | 'mixed';
+}
+
 export interface AIAnalysisResult {
     summary: {
         executive: string;
@@ -10,20 +26,20 @@ export interface AIAnalysisResult {
         dueDate: string | null;
         priority: 'high' | 'medium' | 'low';
     }[];
-    decisions: {
-        description: string;
-        consensus: 'unanimous' | 'majority' | 'contested';
-    }[];
-    topics: {
-        name: string;
-        relevance: number;
-    }[];
-    sentiment: {
-        score: number;
-        magnitude: number;
-        primaryEmotion: 'positive' | 'negative' | 'neutral' | 'mixed';
-    };
+    decisions: Decision[];
+    topics: Topic[];
+    sentiment: Sentiment;
     suggestedTitle?: string;
+}
+
+
+export interface ActionItem {
+    id: string;
+    description: string;
+    assignee: string | null;
+    due_date: string | null;
+    priority: 'high' | 'medium' | 'low';
+    status: 'pending' | 'in-progress' | 'completed';
 }
 
 export interface MeetingMetadata {
@@ -35,6 +51,7 @@ export interface MeetingMetadata {
     transcript?: any[];
     transcription_status?: 'pending' | 'processing' | 'completed' | 'failed';
     ai_analysis?: AIAnalysisResult;
+    action_items?: ActionItem[];
 }
 
 export interface Meeting {
