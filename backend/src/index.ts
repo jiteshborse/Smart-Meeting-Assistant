@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import aiRoutes from './routes/ai.routes';
+import cookieParser from 'cookie-parser';
+import calendarRoutes from './routes/calendar.routes';
 
 // Load environment variables
 dotenv.config();
@@ -12,6 +14,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Security middleware
+app.use(cookieParser());
 app.use(helmet());
 
 // CORS configuration
@@ -29,6 +32,9 @@ app.use('/api', limiter);
 
 // Body parsing
 app.use(express.json());
+
+// routes
+app.use('/api/calendar', calendarRoutes);
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
