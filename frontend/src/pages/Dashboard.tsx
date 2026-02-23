@@ -7,6 +7,7 @@ import { Mic, Calendar, Users, FileText, Clock, ChevronRight } from 'lucide-reac
 import { useMeetingStore } from '../stores/meetingStore';
 import { formatDistanceToNow } from 'date-fns';
 import { formatDuration } from '../lib/utils';
+import { AIStatusBadge } from '../components/meeting/AIStatusBadge';
 
 
 export default function Dashboard() {
@@ -92,9 +93,9 @@ export default function Dashboard() {
                                             </div>
                                         </div>
                                     </div>
-                                    <Badge variant={meeting.status === 'completed' ? 'default' : 'secondary'}>
-                                        {meeting.status}
-                                    </Badge>
+                                    <div className="flex items-center gap-2">
+                                        <AIStatusBadge status={meeting.status as any} />
+                                    </div>
                                 </div>
                             ))}
                         </div>

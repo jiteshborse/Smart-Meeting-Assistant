@@ -11,6 +11,7 @@ import { useToast } from '../components/ui/use-toast';
 import { ArrowLeft, Save } from 'lucide-react';
 import { saveMeetingOffline } from '../lib/db';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import { aiProcessor } from '../services/aiProcessingService';
 
 
 export const NewMeeting: React.FC = () => {
@@ -95,7 +96,7 @@ export const NewMeeting: React.FC = () => {
 
                 await updateMeeting(meetingId, {
                     duration: recordingDuration,
-                    status: 'completed',
+                    status: 'processing',
                     metadata: {
                         transcript: transcriptSegments,
                         audio_url: audioUrl,
@@ -107,9 +108,12 @@ export const NewMeeting: React.FC = () => {
                     }
                 });
 
+                // Queue for AI processing
+                aiProcessor.queueForProcessing(meetingId, transcriptSegments);
+
                 toast({
                     title: 'Meeting saved',
-                    description: 'Your meeting has been saved successfully.'
+                    description: 'AI analysis has been queued.'
                 });
             } else {
                 // Offline: save to IndexedDB
@@ -122,7 +126,7 @@ export const NewMeeting: React.FC = () => {
 
                 toast({
                     title: 'Meeting saved offline',
-                    description: 'Will sync when connection is restored.'
+                    description: 'Will sync and analyze when connection is restored.'
                 });
             }
 
@@ -136,13 +140,6 @@ export const NewMeeting: React.FC = () => {
         }
     };
 
-    {
-        !isOnline && (
-            <Badge variant="outline" className="bg-yellow-100 text-yellow-800">
-                Offline Mode
-            </Badge>
-        )
-    }
 
     return (
         <div className="container max-w-6xl mx-auto py-8">

@@ -12,6 +12,7 @@ import { Decisions } from '../components/meeting/Decisions';
 import { Topics } from '../components/meeting/Topics';
 import { SentimentMeter } from '../components/meeting/SentimentMeter';
 import { SummaryTabs } from '../components/meeting/SummaryTabs';
+import { AIProcessingAnimation } from '../components/meeting/AIProcessingAnimation';
 import { useToast } from '../components/ui/use-toast';
 import {
     ArrowLeft,
@@ -25,7 +26,7 @@ import {
 } from 'lucide-react';
 import { formatDuration } from '../lib/utils';
 import { ConfirmDialog } from '../components/ui/confirm-dialog';
-import { AIInsights } from '../components/meeting/AIInsights';
+
 
 interface TranscriptSegment {
     id: string;
@@ -87,6 +88,23 @@ export const MeetingDetail: React.FC = () => {
             }
         }
     }, [id, meetings, setCurrentMeeting]);
+
+    // Poll for updates when meeting is processing
+    useEffect(() => {
+        if (currentMeeting?.status === 'processing') {
+            const interval = setInterval(async () => {
+                await useMeetingStore.getState().fetchMeetings();
+                const updated = useMeetingStore.getState().meetings.find(m => m.id === id);
+                if (updated?.status === 'completed') {
+                    if (updated.metadata?.transcript) {
+                        setTranscript(updated.metadata.transcript as TranscriptSegment[]);
+                    }
+                    clearInterval(interval);
+                }
+            }, 3000);
+            return () => clearInterval(interval);
+        }
+    }, [currentMeeting?.status, id]);
 
     const handleActionItemStatus = async (itemId: string, status: string) => {
         setActionItems(prev =>
@@ -249,6 +267,11 @@ export const MeetingDetail: React.FC = () => {
                 </Card>
             )}
 
+            {/* AI Processing Animation */}
+            {currentMeeting.status === 'processing' && !currentMeeting.metadata?.ai_analysis && (
+                <AIProcessingAnimation />
+            )}
+
             {/* 4-Tab Layout */}
             <Tabs defaultValue="transcript" className="w-full">
                 <TabsList className="grid w-full grid-cols-4">
@@ -318,7 +341,7 @@ export const MeetingDetail: React.FC = () => {
                     {currentMeeting.metadata?.ai_analysis ? (
                         <>
                             {/* Sentiment */}
-                            <SentimentMeter sentiment={currentMeeting.metadata.ai_analysis.sentiment} />
+                            <SentimentMeter {...currentMeeting.metadata.ai_analysis.sentiment} />
 
                             {/* Decisions */}
                             <Decisions decisions={currentMeeting.metadata.ai_analysis.decisions || []} />

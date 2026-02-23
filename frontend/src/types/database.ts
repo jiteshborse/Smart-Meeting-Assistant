@@ -60,7 +60,7 @@ export interface Meeting {
     title: string;
     date?: string;
     duration?: number;
-    status: 'scheduled' | 'processing' | 'completed';
+    status: 'scheduled' | 'pending' | 'processing' | 'completed' | 'failed';
     created_at: string;
     metadata?: MeetingMetadata;
 }
