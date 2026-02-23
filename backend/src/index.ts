@@ -35,6 +35,7 @@ app.use(express.json());
 
 // routes
 app.use('/api/calendar', calendarRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
@@ -60,7 +61,6 @@ app.get('/api', (req: Request, res: Response) => {
 
 
 // 404 handler
-app.use('/api/ai', aiRoutes);
 app.use((req: Request, res: Response) => {
     res.status(404).json({
         error: 'Not Found',

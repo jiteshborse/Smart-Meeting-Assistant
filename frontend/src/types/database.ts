@@ -52,6 +52,9 @@ export interface MeetingMetadata {
     transcription_status?: 'pending' | 'processing' | 'completed' | 'failed';
     ai_analysis?: AIAnalysisResult;
     action_items?: ActionItem[];
+    calendar_event_id?: string;
+    calendar_synced?: boolean;
+    calendar_meet_link?: string;
 }
 
 export interface Meeting {

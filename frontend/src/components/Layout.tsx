@@ -39,6 +39,7 @@ export default function Layout() {
                                 <nav className="flex flex-col gap-4 mt-8">
                                     <Link to="/" className="text-lg font-medium">Dashboard</Link>
                                     <Link to="/meetings" className="text-lg font-medium">Meetings</Link>
+                                    <Link to="/calendar" className="text-lg font-medium">Calendar</Link>
                                     <Link to="/settings" className="text-lg font-medium">Settings</Link>
                                 </nav>
                             </SheetContent>
@@ -59,6 +60,9 @@ export default function Layout() {
                             </Link>
                             <Link to="/calendar" className="text-sm font-medium hover:text-primary">
                                 Calendar
+                            </Link>
+                            <Link to="/settings" className="text-sm font-medium hover:text-primary">
+                                Settings
                             </Link>
                         </nav>
                     </div>
@@ -97,6 +101,8 @@ export default function Layout() {
             <main className="container mx-auto px-4 py-8">
                 <Outlet />
             </main>
+
+
         </div>
     );
 }

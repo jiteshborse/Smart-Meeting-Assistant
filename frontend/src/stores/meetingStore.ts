@@ -15,6 +15,7 @@ interface MeetingState {
     uploadAudio: (meetingId: string, audioBlob: Blob) => Promise<string | null>;
     getAudioUrl: (meetingId: string) => Promise<string | null>;
     analyzeMeeting: (meetingId: string, transcript: string) => Promise<void>;
+    linkToCalendarEvent: (meetingId: string, calendarEventId: string, meetLink?: string) => Promise<void>;
 }
 
 export const useMeetingStore = create<MeetingState>((set) => ({
@@ -222,6 +223,62 @@ export const useMeetingStore = create<MeetingState>((set) => ({
             throw error;
         } finally {
             set({ isLoading: false });
+        }
+    },
+
+    linkToCalendarEvent: async (meetingId: string, calendarEventId: string, meetLink?: string) => {
+        try {
+            // Fetch existing metadata first to merge
+            const { data: existing } = await supabase
+                .from('meetings')
+                .select('metadata')
+                .eq('id', meetingId)
+                .single();
+
+            const { error } = await supabase
+                .from('meetings')
+                .update({
+                    metadata: {
+                        ...(existing?.metadata || {}),
+                        calendar_event_id: calendarEventId,
+                        calendar_meet_link: meetLink,
+                        calendar_synced: true
+                    }
+                })
+                .eq('id', meetingId);
+
+            if (error) throw error;
+
+            // Update local state
+            set((state) => ({
+                meetings: state.meetings.map(m =>
+                    m.id === meetingId
+                        ? {
+                            ...m,
+                            metadata: {
+                                ...m.metadata,
+                                calendar_event_id: calendarEventId,
+                                calendar_meet_link: meetLink,
+                                calendar_synced: true
+                            }
+                        }
+                        : m
+                ),
+                currentMeeting: state.currentMeeting?.id === meetingId
+                    ? {
+                        ...state.currentMeeting,
+                        metadata: {
+                            ...state.currentMeeting.metadata,
+                            calendar_event_id: calendarEventId,
+                            calendar_meet_link: meetLink,
+                            calendar_synced: true
+                        }
+                    }
+                    : state.currentMeeting
+            }));
+
+        } catch (error) {
+            console.error('Error linking meeting to calendar:', error);
         }
     },
 

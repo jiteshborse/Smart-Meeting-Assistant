@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -14,17 +14,21 @@ import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { aiProcessor } from '../services/aiProcessingService';
 
 
+
 export const NewMeeting: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { toast } = useToast();
     const { isOnline } = useNetworkStatus();
     const { createMeeting, updateMeeting, uploadAudio } = useMeetingStore();
+    const fromEvent = location.state?.fromEvent;
 
     const [step, setStep] = useState<'setup' | 'recording' | 'save'>('setup');
     const [meetingTitle, setMeetingTitle] = useState('');
     const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
     const [recordingDuration, setRecordingDuration] = useState(0);
     const [meetingId, setMeetingId] = useState<string | null>(null);
+    const [calendarEventId, setCalendarEventId] = useState<string | null>(null);
 
     const {
         transcriptSegments,
@@ -34,6 +38,14 @@ export const NewMeeting: React.FC = () => {
         stopListening,
         error: recognitionError
     } = useSpeechRecognition();
+
+    // Pre-fill from calendar event
+    React.useEffect(() => {
+        if (fromEvent) {
+            setMeetingTitle(fromEvent.title || fromEvent.summary || '');
+            setCalendarEventId(fromEvent.id || null);
+        }
+    }, [fromEvent]);
 
     // Log state changes for debugging
     React.useEffect(() => {
@@ -110,6 +122,15 @@ export const NewMeeting: React.FC = () => {
 
                 // Queue for AI processing
                 aiProcessor.queueForProcessing(meetingId, transcriptSegments);
+
+                // Link to calendar event if created from one
+                if (calendarEventId) {
+                    await useMeetingStore.getState().linkToCalendarEvent(
+                        meetingId,
+                        calendarEventId,
+                        fromEvent?.hangoutLink
+                    );
+                }
 
                 toast({
                     title: 'Meeting saved',

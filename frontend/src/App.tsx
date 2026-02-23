@@ -9,7 +9,10 @@ import Login from './pages/Login';
 import { useAuthStore } from './stores/authStore';
 import { useNetworkStatus } from './hooks/useNetworkStatus';
 import { syncOfflineMeetings } from './services/syncService';
+import { Settings } from './pages/Settings';
 import { useEffect } from 'react';
+import { AuthCallback } from './pages/AuthCallback';
+import { CalendarPage } from './pages/CalendarPage';
 
 function App() {
   const { user } = useAuthStore();
@@ -32,6 +35,9 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="meetings/new" element={<NewMeeting />} />
           <Route path="meeting/:id" element={<MeetingDetail />} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="calendar" element={<CalendarPage />} />
+          <Route path="auth/callback" element={<AuthCallback />} />
         </Route>
       </Routes>
       <Toaster />
