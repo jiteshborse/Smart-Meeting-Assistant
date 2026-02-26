@@ -8,6 +8,7 @@ import {
 } from './ui/dropdown-menu';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { useAuthStore } from '../stores/authStore';
+import { OrganizationSwitcher } from './teams/OrganizationSwitcher';
 
 import { Menu, LogOut } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
@@ -68,7 +69,8 @@ export default function Layout() {
                     </div>
 
                     {/* Right side actions */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-4">
+                        <OrganizationSwitcher />
                         {/* Theme toggle */}
 
 

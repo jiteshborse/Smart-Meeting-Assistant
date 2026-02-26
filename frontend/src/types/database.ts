@@ -66,4 +66,58 @@ export interface Meeting {
     status: 'scheduled' | 'pending' | 'processing' | 'completed' | 'failed';
     created_at: string;
     metadata?: MeetingMetadata;
+    organization_id?: string;
+    visibility: MeetingVisibility;
+    shared_with: string[];
+}
+
+export type OrganizationRole = 'owner' | 'admin' | 'member' | 'viewer';
+export type TeamRole = 'lead' | 'member';
+export type MeetingVisibility = 'private' | 'team' | 'organization' | 'public';
+
+export interface Organization {
+    id: string;
+    name: string;
+    slug: string;
+    logo_url: string | null;
+    settings: Record<string, any>;
+    created_by: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface OrganizationMember {
+    id: string;
+    organization_id: string;
+    user_id: string;
+    role: OrganizationRole;
+    joined_at: string;
+    invited_by: string | null;
+    user?: {
+        email: string;
+        full_name: string | null;
+        avatar_url: string | null;
+    };
+}
+
+export interface Team {
+    id: string;
+    organization_id: string;
+    name: string;
+    description: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface TeamMember {
+    id: string;
+    team_id: string;
+    user_id: string;
+    role: TeamRole;
+    joined_at: string;
+    user?: {
+        email: string;
+        full_name: string | null;
+        avatar_url: string | null;
+    };
 }

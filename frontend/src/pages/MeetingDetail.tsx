@@ -4,6 +4,8 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { ScrollArea } from '../components/ui/scroll-area';
 import { Badge } from '../components/ui/badge';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
 import { useMeetingStore } from '../stores/meetingStore';
 import type { ActionItem } from '../types/database';
 import { ActionItems } from '../components/meeting/ActionItems';
@@ -15,6 +17,21 @@ import { SummaryTabs } from '../components/meeting/SummaryTabs';
 import { AIProcessingAnimation } from '../components/meeting/AIProcessingAnimation';
 import { useToast } from '../components/ui/use-toast';
 import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '../components/ui/dialog';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '../components/ui/select';
+import {
     ArrowLeft,
     Download,
     Trash2,
@@ -22,10 +39,12 @@ import {
     FileText,
     Mic,
     Calendar,
-    Brain
+    Brain,
+    Repeat
 } from 'lucide-react';
 import { formatDuration } from '../lib/utils';
 import { ConfirmDialog } from '../components/ui/confirm-dialog';
+import { autoScheduler } from '../services/autoScheduler';
 
 
 interface TranscriptSegment {
@@ -50,6 +69,15 @@ export const MeetingDetail: React.FC = () => {
     const [isDeleting, setIsDeleting] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+    const [scheduleForm, setScheduleForm] = useState({
+        frequency: 'weekly' as 'daily' | 'weekly' | 'monthly',
+        dayOfWeek: new Date().getDay(),
+        dayOfMonth: new Date().getDate(),
+        time: '10:00',
+        duration: 60,
+        attendees: ''
+    });
 
     // Transform AI analysis action items into the ActionItem format
     useEffect(() => {
@@ -239,6 +267,13 @@ export const MeetingDetail: React.FC = () => {
                         Transcript
                     </Button>
                     <Button
+                        variant="outline"
+                        onClick={() => setShowScheduleDialog(true)}
+                    >
+                        <Repeat className="mr-2 h-4 w-4" />
+                        Set Recurring
+                    </Button>
+                    <Button
                         variant="destructive"
                         onClick={() => setShowDeleteConfirm(true)}
                         disabled={isDeleting}
@@ -372,6 +407,155 @@ export const MeetingDetail: React.FC = () => {
                 title="Delete Meeting"
                 description="Are you sure you want to delete this meeting? This action cannot be undone."
             />
+
+            {/* Recurring Schedule Dialog */}
+            <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
+                <DialogContent className="sm:max-w-[450px]">
+                    <DialogHeader>
+                        <DialogTitle>Set Recurring Schedule</DialogTitle>
+                        <DialogDescription>
+                            Automatically schedule this meeting on a recurring basis
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label>Frequency</Label>
+                            <Select
+                                value={scheduleForm.frequency}
+                                onValueChange={(value: 'daily' | 'weekly' | 'monthly') =>
+                                    setScheduleForm({ ...scheduleForm, frequency: value })
+                                }
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="daily">Daily</SelectItem>
+                                    <SelectItem value="weekly">Weekly</SelectItem>
+                                    <SelectItem value="monthly">Monthly</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {scheduleForm.frequency === 'weekly' && (
+                            <div className="space-y-2">
+                                <Label>Day of Week</Label>
+                                <Select
+                                    value={scheduleForm.dayOfWeek.toString()}
+                                    onValueChange={(value) =>
+                                        setScheduleForm({ ...scheduleForm, dayOfWeek: parseInt(value) })
+                                    }
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="0">Sunday</SelectItem>
+                                        <SelectItem value="1">Monday</SelectItem>
+                                        <SelectItem value="2">Tuesday</SelectItem>
+                                        <SelectItem value="3">Wednesday</SelectItem>
+                                        <SelectItem value="4">Thursday</SelectItem>
+                                        <SelectItem value="5">Friday</SelectItem>
+                                        <SelectItem value="6">Saturday</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+
+                        {scheduleForm.frequency === 'monthly' && (
+                            <div className="space-y-2">
+                                <Label>Day of Month</Label>
+                                <Input
+                                    type="number"
+                                    min={1}
+                                    max={31}
+                                    value={scheduleForm.dayOfMonth}
+                                    onChange={(e) =>
+                                        setScheduleForm({ ...scheduleForm, dayOfMonth: parseInt(e.target.value) })
+                                    }
+                                />
+                            </div>
+                        )}
+
+                        <div className="space-y-2">
+                            <Label>Time</Label>
+                            <Input
+                                type="time"
+                                value={scheduleForm.time}
+                                onChange={(e) =>
+                                    setScheduleForm({ ...scheduleForm, time: e.target.value })
+                                }
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Duration (minutes)</Label>
+                            <Select
+                                value={scheduleForm.duration.toString()}
+                                onValueChange={(value) =>
+                                    setScheduleForm({ ...scheduleForm, duration: parseInt(value) })
+                                }
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="15">15 minutes</SelectItem>
+                                    <SelectItem value="30">30 minutes</SelectItem>
+                                    <SelectItem value="45">45 minutes</SelectItem>
+                                    <SelectItem value="60">1 hour</SelectItem>
+                                    <SelectItem value="90">1.5 hours</SelectItem>
+                                    <SelectItem value="120">2 hours</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Attendees (comma-separated emails)</Label>
+                            <Input
+                                value={scheduleForm.attendees}
+                                onChange={(e) =>
+                                    setScheduleForm({ ...scheduleForm, attendees: e.target.value })
+                                }
+                                placeholder="team@company.com, manager@company.com"
+                            />
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowScheduleDialog(false)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                if (!currentMeeting) return;
+                                autoScheduler.addRule({
+                                    meetingId: currentMeeting.id,
+                                    frequency: scheduleForm.frequency,
+                                    dayOfWeek: scheduleForm.dayOfWeek,
+                                    dayOfMonth: scheduleForm.dayOfMonth,
+                                    time: scheduleForm.time,
+                                    duration: scheduleForm.duration,
+                                    attendees: scheduleForm.attendees
+                                        .split(',')
+                                        .map(e => e.trim())
+                                        .filter(e => e),
+                                    enabled: true
+                                });
+                                toast({
+                                    title: 'Recurring Schedule Set',
+                                    description: `This meeting will repeat ${scheduleForm.frequency}.`
+                                });
+                                setShowScheduleDialog(false);
+                            }}
+                        >
+                            <Repeat className="mr-2 h-4 w-4" />
+                            Create Schedule
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

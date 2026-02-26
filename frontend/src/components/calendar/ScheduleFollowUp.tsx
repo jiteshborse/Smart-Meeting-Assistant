@@ -92,6 +92,7 @@ export const ScheduleFollowUp: React.FC<ScheduleFollowUpProps> = ({
                     .split(',')
                     .map(email => email.trim())
                     .filter(email => email),
+                hangoutLink: formData.hasMeet ? 'meet' : undefined,
                 meetingId
             });
 

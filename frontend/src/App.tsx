@@ -13,6 +13,7 @@ import { Settings } from './pages/Settings';
 import { useEffect } from 'react';
 import { AuthCallback } from './pages/AuthCallback';
 import { CalendarPage } from './pages/CalendarPage';
+import { AcceptInvite } from './pages/AcceptInvite';
 
 function App() {
   const { user } = useAuthStore();
@@ -38,6 +39,7 @@ function App() {
           <Route path="settings" element={<Settings />} />
           <Route path="calendar" element={<CalendarPage />} />
           <Route path="auth/callback" element={<AuthCallback />} />
+          <Route path="/invite/:token" element={<AcceptInvite />} />
         </Route>
       </Routes>
       <Toaster />
