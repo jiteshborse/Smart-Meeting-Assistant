@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { ScrollArea } from '../components/ui/scroll-area';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
@@ -45,6 +45,7 @@ import {
 import { formatDuration } from '../lib/utils';
 import { ConfirmDialog } from '../components/ui/confirm-dialog';
 import { autoScheduler } from '../services/autoScheduler';
+import { CommentSection } from '../components/comments/CommentSection';
 
 
 interface TranscriptSegment {
@@ -65,6 +66,7 @@ export const MeetingDetail: React.FC = () => {
 
     const { meetings, currentMeeting, setCurrentMeeting, deleteMeeting, fetchMeetings, isLoading, getAudioUrl, analyzeMeeting } = useMeetingStore();
     const [transcript, setTranscript] = useState<TranscriptSegment[]>([]);
+    const audioRef = useRef<HTMLAudioElement>(null);
     const [audioUrl, setAudioUrl] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -294,7 +296,7 @@ export const MeetingDetail: React.FC = () => {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <audio controls className="w-full">
+                        <audio ref={audioRef} controls className="w-full">
                             <source src={audioUrl} type={currentMeeting.metadata?.audio_type || 'audio/webm'} />
                             Your browser does not support the audio element.
                         </audio>
@@ -309,11 +311,12 @@ export const MeetingDetail: React.FC = () => {
 
             {/* 4-Tab Layout */}
             <Tabs defaultValue="transcript" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-5">
                     <TabsTrigger value="transcript">Transcript</TabsTrigger>
                     <TabsTrigger value="summary">Summary</TabsTrigger>
                     <TabsTrigger value="actions">Actions</TabsTrigger>
                     <TabsTrigger value="insights">Insights</TabsTrigger>
+                    <TabsTrigger value="comments">Comments</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="transcript">
@@ -397,6 +400,23 @@ export const MeetingDetail: React.FC = () => {
                             </Button>
                         </div>
                     )}
+                </TabsContent>
+
+                <TabsContent value="comments">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Discussion</CardTitle>
+                            <CardDescription>
+                                Comment on this meeting and mention teammates with @
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <CommentSection
+                                meetingId={id!}
+                                audioPlayerRef={audioRef}
+                            />
+                        </CardContent>
+                    </Card>
                 </TabsContent>
             </Tabs>
 
