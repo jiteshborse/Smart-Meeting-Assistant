@@ -9,6 +9,7 @@ import {
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { useAuthStore } from '../stores/authStore';
 import { OrganizationSwitcher } from './teams/OrganizationSwitcher';
+import { SearchBar } from './search/SearchBar';
 
 import { Menu, LogOut } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
@@ -66,6 +67,11 @@ export default function Layout() {
                                 Settings
                             </Link>
                         </nav>
+                    </div>
+
+                    {/* Search Bar */}
+                    <div className="hidden md:flex flex-1 justify-center px-4">
+                        <SearchBar />
                     </div>
 
                     {/* Right side actions */}

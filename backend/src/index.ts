@@ -6,6 +6,7 @@ import rateLimit from 'express-rate-limit';
 import aiRoutes from './routes/ai.routes';
 import cookieParser from 'cookie-parser';
 import calendarRoutes from './routes/calendar.routes';
+import searchRoutes from './routes/search.routes';
 
 // Load environment variables
 dotenv.config();
@@ -33,9 +34,11 @@ app.use('/api', limiter);
 // Body parsing
 app.use(express.json());
 
+
 // routes
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api', searchRoutes);
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
