@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { supabase } from '../lib/supabase';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -10,6 +11,15 @@ import { useMeetingStore } from '../stores/meetingStore';
 import type { ActionItem } from '../types/database';
 import { ActionItems } from '../components/meeting/ActionItems';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Checkbox } from '../components/ui/checkbox';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
 import { Decisions } from '../components/meeting/Decisions';
 import { Topics } from '../components/meeting/Topics';
 import { SentimentMeter } from '../components/meeting/SentimentMeter';
@@ -71,6 +81,13 @@ export const MeetingDetail: React.FC = () => {
     const [isDeleting, setIsDeleting] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [exportOptions, setExportOptions] = useState({
+        format: 'pdf' as 'pdf' | 'txt' | 'json',
+        includeTranscript: true,
+        includeSummary: true,
+        includeActionItems: true,
+        includeComments: true
+    });
     const [showScheduleDialog, setShowScheduleDialog] = useState(false);
     const [scheduleForm, setScheduleForm] = useState({
         frequency: 'weekly' as 'daily' | 'weekly' | 'monthly',
@@ -216,6 +233,48 @@ export const MeetingDetail: React.FC = () => {
         URL.revokeObjectURL(url);
     };
 
+    const handleExport = async (format: 'pdf' | 'txt' | 'json') => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+
+            const response = await fetch(
+                `${import.meta.env.VITE_API_URL}/api/export/meetings/${id}/export`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session?.access_token}`
+                    },
+                    body: JSON.stringify({ ...exportOptions, format })
+                }
+            );
+
+            if (!response.ok) throw new Error('Export failed');
+
+            const contentDisposition = response.headers.get('Content-Disposition');
+            const filename = contentDisposition?.match(/filename="(.+)"/)?.[1] || `meeting.${format}`;
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+
+            toast({
+                title: 'Success',
+                description: `Meeting exported as ${format.toUpperCase()}`
+            });
+        } catch (error) {
+            toast({
+                title: 'Error',
+                description: 'Failed to export meeting',
+                variant: 'destructive'
+            });
+        }
+    };
+
     if (!currentMeeting) {
         return null;
     }
@@ -268,6 +327,70 @@ export const MeetingDetail: React.FC = () => {
                         <Download className="mr-2 h-4 w-4" />
                         Transcript
                     </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline">
+                                <Download className="h-4 w-4 mr-2" />
+                                Export
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-64">
+                            <DropdownMenuLabel>Export Options</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <div className="p-2 space-y-2">
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id="export-summary"
+                                        checked={exportOptions.includeSummary}
+                                        onCheckedChange={(checked) =>
+                                            setExportOptions(prev => ({ ...prev, includeSummary: !!checked }))
+                                        }
+                                    />
+                                    <label htmlFor="export-summary" className="text-sm">Include Summary</label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id="export-actions"
+                                        checked={exportOptions.includeActionItems}
+                                        onCheckedChange={(checked) =>
+                                            setExportOptions(prev => ({ ...prev, includeActionItems: !!checked }))
+                                        }
+                                    />
+                                    <label htmlFor="export-actions" className="text-sm">Include Action Items</label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id="export-transcript"
+                                        checked={exportOptions.includeTranscript}
+                                        onCheckedChange={(checked) =>
+                                            setExportOptions(prev => ({ ...prev, includeTranscript: !!checked }))
+                                        }
+                                    />
+                                    <label htmlFor="export-transcript" className="text-sm">Include Transcript</label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id="export-comments"
+                                        checked={exportOptions.includeComments}
+                                        onCheckedChange={(checked) =>
+                                            setExportOptions(prev => ({ ...prev, includeComments: !!checked }))
+                                        }
+                                    />
+                                    <label htmlFor="export-comments" className="text-sm">Include Comments</label>
+                                </div>
+                            </div>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleExport('pdf')}>
+                                Export as PDF
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleExport('txt')}>
+                                Export as Text
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleExport('json')}>
+                                Export as JSON
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                     <Button
                         variant="outline"
                         onClick={() => setShowScheduleDialog(true)}
