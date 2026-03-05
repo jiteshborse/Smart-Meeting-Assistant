@@ -5,6 +5,7 @@ export interface SearchResult {
     title: string;
     created_at: string;
     user_id: string;
+    visibility?: string;
     rank: number;
     highlights: {
         title?: string;
@@ -34,9 +35,10 @@ export class SearchService {
             // Get highlights for each result
             const results = await Promise.all(
                 (data || []).map(async (item, index) => {
-                    const highlights = await this.getHighlights(item.id, query);
+                    const { highlights, visibility } = await this.getHighlights(item.id, query);
                     return {
                         ...item,
+                        visibility,
                         rank: 1 - (index * 0.05), // Simple rank based on order
                         highlights
                     };
@@ -50,17 +52,18 @@ export class SearchService {
         }
     }
 
-    private async getHighlights(meetingId: string, query: string): Promise<SearchResult['highlights']> {
+    private async getHighlights(meetingId: string, query: string): Promise<{ highlights: SearchResult['highlights']; visibility?: string }> {
         try {
             const { data } = await supabaseAdmin
                 .from('meetings')
-                .select('title, metadata')
+                .select('title, metadata, visibility')
                 .eq('id', meetingId)
                 .single();
 
-            if (!data) return {};
+            if (!data) return { highlights: {} };
 
             const highlights: SearchResult['highlights'] = {};
+            const visibility = data.visibility;
             const queryLower = query.toLowerCase();
 
             // Highlight title
@@ -87,10 +90,10 @@ export class SearchService {
                 }
             }
 
-            return highlights;
+            return { highlights, visibility };
         } catch (error) {
             console.error('Error getting highlights:', error);
-            return {};
+            return { highlights: {} };
         }
     }
 

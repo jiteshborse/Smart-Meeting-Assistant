@@ -8,6 +8,9 @@ import cookieParser from 'cookie-parser';
 import calendarRoutes from './routes/calendar.routes';
 import searchRoutes from './routes/search.routes';
 import exportRoutes from './routes/export.routes';
+import invitationRoutes from './routes/invitation.routes';
+// Job routes require Redis — run worker separately: npm run worker
+// import jobRoutes from './routes/jobs.routes';
 
 // Load environment variables
 dotenv.config();
@@ -41,6 +44,8 @@ app.use('/api/calendar', calendarRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api', searchRoutes);
 app.use('/api/export', exportRoutes);
+app.use('/api', invitationRoutes);
+// app.use('/api/jobs', jobRoutes); // Enable when Redis is running
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {

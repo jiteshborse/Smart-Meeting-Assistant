@@ -5,8 +5,8 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Initialize Resend (free tier: 3000 emails/month)
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Resend only if API key is available
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 export interface InvitationData {
     email: string;
@@ -53,6 +53,11 @@ export class InvitationService {
         const inviteUrl = `${process.env.FRONTEND_URL}/invite/${token}`;
 
         try {
+            if (!resend) {
+                console.log('[Dev] No RESEND_API_KEY set. Invitation URL:', inviteUrl);
+                return;
+            }
+
             await resend.emails.send({
                 from: 'Smart Meeting Assistant <invitations@yourdomain.com>',
                 to: email,

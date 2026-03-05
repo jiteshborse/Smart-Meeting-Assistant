@@ -47,7 +47,7 @@ router.post('/invitations', async (req: Request, res: Response) => {
             .single();
 
         // Create invitation
-        const { token, expiresAt } = await invitationService.createInvitation({
+        const { token: inviteToken, expiresAt } = await invitationService.createInvitation({
             email,
             organizationId,
             role,
@@ -57,7 +57,7 @@ router.post('/invitations', async (req: Request, res: Response) => {
         // Send email
         await invitationService.sendInvitationEmail(
             email,
-            token,
+            inviteToken,
             org?.name || 'Unknown Organization',
             inviter?.full_name || inviter?.email || 'A team member'
         );
@@ -88,7 +88,7 @@ router.post('/invitations/:token/accept', async (req: Request, res: Response) =>
             return res.status(401).json({ error: 'Invalid token' });
         }
 
-        const { token: invitationToken } = req.params;
+        const invitationToken = req.params.token as string;
 
         await invitationService.acceptInvitation(invitationToken, user.id);
 
@@ -129,7 +129,7 @@ router.get('/organizations/:organizationId/invitations', async (req: Request, re
             return res.status(403).json({ error: 'Insufficient permissions' });
         }
 
-        const invitations = await invitationService.getPendingInvitations(organizationId);
+        const invitations = await invitationService.getPendingInvitations(organizationId as string);
         res.json({ invitations });
 
     } catch (error) {

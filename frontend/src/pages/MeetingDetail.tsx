@@ -50,12 +50,16 @@ import {
     Mic,
     Calendar,
     Brain,
-    Repeat
+    Repeat,
+    Share2
 } from 'lucide-react';
 import { formatDuration } from '../lib/utils';
 import { ConfirmDialog } from '../components/ui/confirm-dialog';
 import { autoScheduler } from '../services/autoScheduler';
 import { CommentSection } from '../components/comments/CommentSection';
+import { useJobStatus } from '../hooks/useJobStatus';
+import { Progress } from '../components/ui/progress';
+import { ShareMeetingDialog } from '../components/sharing/ShareMeetingDialog';
 
 
 interface TranscriptSegment {
@@ -81,6 +85,8 @@ export const MeetingDetail: React.FC = () => {
     const [isDeleting, setIsDeleting] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [jobId, setJobId] = useState<string | null>(null);
+    const { status: jobStatus } = useJobStatus(jobId);
     const [exportOptions, setExportOptions] = useState({
         format: 'pdf' as 'pdf' | 'txt' | 'json',
         includeTranscript: true,
@@ -89,6 +95,7 @@ export const MeetingDetail: React.FC = () => {
         includeComments: true
     });
     const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+    const [showShareDialog, setShowShareDialog] = useState(false);
     const [scheduleForm, setScheduleForm] = useState({
         frequency: 'weekly' as 'daily' | 'weekly' | 'monthly',
         dayOfWeek: new Date().getDay(),
@@ -393,6 +400,13 @@ export const MeetingDetail: React.FC = () => {
                     </DropdownMenu>
                     <Button
                         variant="outline"
+                        onClick={() => setShowShareDialog(true)}
+                    >
+                        <Share2 className="mr-2 h-4 w-4" />
+                        Share
+                    </Button>
+                    <Button
+                        variant="outline"
                         onClick={() => setShowScheduleDialog(true)}
                     >
                         <Repeat className="mr-2 h-4 w-4" />
@@ -408,6 +422,25 @@ export const MeetingDetail: React.FC = () => {
                     </Button>
                 </div>
             </div>
+
+            {/* AI Analysis Progress */}
+            {currentMeeting?.status === 'processing' && jobStatus && (
+                <Card className="mb-6">
+                    <CardContent className="pt-6">
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium">AI Analysis Progress</span>
+                                <span className="text-sm text-muted-foreground">{jobStatus.progress}%</span>
+                            </div>
+                            <Progress value={typeof jobStatus.progress === 'number' ? jobStatus.progress : 0} className="h-2" />
+                            <p className="text-xs text-muted-foreground">
+                                Status: {jobStatus.state}
+                                {jobStatus.failedReason && ` - ${jobStatus.failedReason}`}
+                            </p>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Audio Player */}
             {audioUrl && (
@@ -551,6 +584,15 @@ export const MeetingDetail: React.FC = () => {
                 description="Are you sure you want to delete this meeting? This action cannot be undone."
             />
 
+            {/* Share Meeting Dialog */}
+            <ShareMeetingDialog
+                open={showShareDialog}
+                onOpenChange={setShowShareDialog}
+                meetingId={currentMeeting.id}
+                currentVisibility={currentMeeting.visibility || 'private'}
+                currentSharedWith={currentMeeting.shared_with || []}
+                onUpdate={() => fetchMeetings()}
+            />
             {/* Recurring Schedule Dialog */}
             <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
                 <DialogContent className="sm:max-w-[450px]">

@@ -252,7 +252,7 @@ export const MeetingTemplates: React.FC = () => {
 
             {/* Template Dialog */}
             <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
-                <DialogContent className="sm:max-w-[500px]">
+                <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>
                             {editingTemplate ? 'Edit Template' : 'Create Template'}

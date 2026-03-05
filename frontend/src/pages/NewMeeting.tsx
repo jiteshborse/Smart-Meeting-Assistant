@@ -98,17 +98,19 @@ export const NewMeeting: React.FC = () => {
 
 
 
+    // Update handleSave
     const handleSave = async () => {
         if (!meetingId || !audioBlob) return;
 
         try {
             if (isOnline) {
-                // Online: upload to Supabase
+                // Upload audio
                 const audioUrl = await useMeetingStore.getState().uploadAudio(meetingId, audioBlob);
 
+                // Save meeting
                 await updateMeeting(meetingId, {
                     duration: recordingDuration,
-                    status: 'processing',
+                    status: 'processing', // Set to processing initially
                     metadata: {
                         transcript: transcriptSegments,
                         audio_url: audioUrl,
@@ -120,24 +122,22 @@ export const NewMeeting: React.FC = () => {
                     }
                 });
 
-                // Queue for AI processing
-                aiProcessor.queueForProcessing(meetingId, transcriptSegments);
+                // Queue AI analysis
+                const { data: { session } } = await supabase.auth.getSession();
 
-                // Link to calendar event if created from one
-                if (calendarEventId) {
-                    await useMeetingStore.getState().linkToCalendarEvent(
-                        meetingId,
-                        calendarEventId,
-                        fromEvent?.hangoutLink
-                    );
-                }
+                await fetch(`${import.meta.env.VITE_API_URL}/api/jobs/meetings/${meetingId}/analyze`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${session?.access_token}`
+                    }
+                });
 
                 toast({
                     title: 'Meeting saved',
                     description: 'AI analysis has been queued.'
                 });
             } else {
-                // Offline: save to IndexedDB
+                // Offline: save locally
                 await saveMeetingOffline(
                     meetingId,
                     meetingTitle,
